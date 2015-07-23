@@ -66,6 +66,10 @@ TableTennisGame.prototype.addPlayer = function(player) {
 };
 
 TableTennisGame.prototype.start = function() {
+  if (this.started) {
+    return;
+  }
+
   clearTimeout(this.timeoutTimer);
 
   this.started = true;
@@ -80,6 +84,10 @@ TableTennisGame.prototype.start = function() {
 };
 
 TableTennisGame.prototype.finish = function(eventOverride) {
+  if (this.finished) {
+    return;
+  }
+
   clearTimeout(this.gameTimer);
 
   this.finished = true;
