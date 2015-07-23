@@ -88,6 +88,7 @@ TableTennisGame.prototype.finish = function(eventOverride) {
     return;
   }
 
+  clearTimeout(this.timeoutTimer);
   clearTimeout(this.gameTimer);
 
   this.finished = true;
