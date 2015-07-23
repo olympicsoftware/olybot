@@ -49,7 +49,7 @@ module.exports = function(robot) {
       return;
     }
 
-    var joiner = res.envelope.user.name + Math.random();
+    var joiner = res.envelope.user.name;
 
     if (currentGame.hasPlayer(joiner)) {
       res.send('Rack off pleb, you\'re already in the game.');
