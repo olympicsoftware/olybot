@@ -29,7 +29,7 @@ module.exports = function(robot) {
       return res.send('<!channel>: @' + res.envelope.user.name + ' started a table tennis game. Say "in" to join the game.');
     }
 
-    res.send(currentGame.getPlayerList() + ' are currently in a game. They should be finished in about ' + currentGame.timeLeft() + '.');
+    return res.send(currentGame.getPlayerList() + ' are currently in a game. They should be finished in about ' + currentGame.timeLeft() + '.');
   });
 
   robot.hear(/in/, function(res) {
@@ -61,12 +61,12 @@ module.exports = function(robot) {
 
   robot.respond(/tt cancel$/, function(res) {
     if (isTableFree()) {
-      return res.send('There is no current TT game.');
+      return res.send('There is no current game.');
     }
 
     currentGame.finish();
 
-    res.send('Game cancelled with ' + currentGame.timeLeft() + ' left.');
+    return res.send('Game cancelled with ' + currentGame.timeLeft() + ' left.');
   });
 
   robot.respond(/tt timeleft$/, function(res) {
@@ -74,6 +74,10 @@ module.exports = function(robot) {
       return res.send('There is no current TT game.');
     }
 
-    res.send('Current game will be finished in ' + currentGame.timeLeft() + '.');
+    if (!currentGame.isStarted()) {
+      return res.send('The current game hasn\'t started yet.');
+    }
+
+    return res.send('Current game will be finished in ' + currentGame.timeLeft() + '.');
   });
 };
