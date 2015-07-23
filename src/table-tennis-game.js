@@ -1,6 +1,7 @@
 'use strict';
 
 var moment = require('moment'),
+  humanizeList = require('humanize-list'),
   util = require('util'),
   EventEmitter = require('events').EventEmitter;
 
@@ -15,20 +16,25 @@ function TableTennisGame(initialPlayer, maxPlayers, durationInMinutes, timeoutIn
   this.initiated = moment();
   this.timeout = moment.duration(timeoutInMinutes || 5, 'minutes');
   this.duration = moment.duration(durationInMinutes || 30, 'minutes');
+
+  this.timeoutTimer = setTimeout(
+    this.cancel.bind(this),
+    this.timeout.asMilliseconds()
+  );
 }
 
 util.inherits(TableTennisGame, EventEmitter);
 
 TableTennisGame.prototype.timeLeft = function() {
   if (!this.started) {
-    return moment.duration(0);
+    return this.initiated.add(this.timeout).fromNow(true);
   }
 
   return this.startTime.add(this.duration).fromNow(true);
 };
 
-TableTennisGame.prototype.getPlayerList = function(sep) {
-  return this.players.join(sep || ', ');
+TableTennisGame.prototype.getPlayerList = function() {
+  return humanizeList(this.players);
 };
 
 TableTennisGame.prototype.hasPlayer = function(player) {
@@ -39,12 +45,8 @@ TableTennisGame.prototype.isFull = function() {
   return this.players.length >= this.maxPlayers;
 };
 
-TableTennisGame.prototype.isTimedOut = function() {
-  return !this.started && moment().isAfter(this.initiated.add(this.timeout));
-};
-
 TableTennisGame.prototype.isFinished = function() {
-  return this.finished || this.isTimedOut();
+  return this.finished;
 };
 
 TableTennisGame.prototype.isStarted = function() {
@@ -64,19 +66,30 @@ TableTennisGame.prototype.addPlayer = function(player) {
 };
 
 TableTennisGame.prototype.start = function() {
+  clearTimeout(this.timeoutTimer);
+
   this.started = true;
   this.startTime = moment();
 
-  setTimeout(this.finish.bind(this), this.duration.asMilliseconds());
+  this.gameTimer = setTimeout(
+    this.finish.bind(this),
+    this.duration.asMilliseconds()
+  );
 
   this.emitAsync('tt.start');
 };
 
-TableTennisGame.prototype.finish = function() {
+TableTennisGame.prototype.finish = function(eventOverride) {
+  clearTimeout(this.gameTimer);
+
   this.finished = true;
   this.finishTime = moment();
 
-  this.emitAsync('tt.finish');
+  this.emitAsync(eventOverride || 'tt.finish');
+};
+
+TableTennisGame.prototype.cancel = function() {
+  this.finish('tt.cancel');
 };
 
 TableTennisGame.prototype.emitAsync = function(event) {

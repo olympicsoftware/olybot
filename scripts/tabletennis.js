@@ -11,12 +11,18 @@ module.exports = function(robot) {
 
   function onFull() {
     currentGame.start();
+  }
 
-    robot.messageRoom('bottesting', 'Woo game started, good luck to ' + currentGame.getPlayerList());
+  function onStart() {
+    robot.messageRoom('bottesting', 'glhf ' + currentGame.getPlayerList() + '.');
   }
 
   function onFinish() {
-    robot.messageRoom('bottesting', 'gg ' + currentGame.getPlayerList());
+    robot.messageRoom('bottesting', 'gg ' + currentGame.getPlayerList() + '.');
+  }
+
+  function onCancel() {
+    robot.messageRoom('bottesting', 'Game cancelled with ' + currentGame.timeLeft() + ' left.');
   }
 
   robot.respond(/tt$/, function(res) {
@@ -24,9 +30,15 @@ module.exports = function(robot) {
       currentGame = new TableTennisGame(res.envelope.user.name);
 
       currentGame.on('tt.full', onFull);
+      currentGame.on('tt.start', onStart);
       currentGame.on('tt.finish', onFinish);
+      currentGame.on('tt.cancel', onCancel);
 
       return res.send('<!channel>: @' + res.envelope.user.name + ' started a table tennis game. Say "in" to join the game.');
+    }
+
+    if (!currentGame.isStarted()) {
+      return res.send(currentGame.getPlayerList() + ' are waiting for more players. Say "in" to join the game.');
     }
 
     return res.send(currentGame.getPlayerList() + ' are currently in a game. They should be finished in about ' + currentGame.timeLeft() + '.');
@@ -64,9 +76,7 @@ module.exports = function(robot) {
       return res.send('There is no current game.');
     }
 
-    currentGame.finish();
-
-    return res.send('Game cancelled with ' + currentGame.timeLeft() + ' left.');
+    currentGame.cancel();
   });
 
   robot.respond(/tt timeleft$/, function(res) {
@@ -75,7 +85,7 @@ module.exports = function(robot) {
     }
 
     if (!currentGame.isStarted()) {
-      return res.send('The current game hasn\'t started yet.');
+      return res.send('There is ' + currentGame.timeLeft() + ' left to join the game.');
     }
 
     return res.send('Current game will be finished in ' + currentGame.timeLeft() + '.');
